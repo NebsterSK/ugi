@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property int $id
+ * @property string $url
  * @property string $content
  * @property \Illuminate\Support\Carbon $created_at
  * @method static \Database\Factories\ParseFactory factory($count = null, $state = [])
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Parse whereContent($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Parse whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Parse whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Parse whereUrl($value)
  * @mixin \Eloquent
  */
 class Parse extends Model

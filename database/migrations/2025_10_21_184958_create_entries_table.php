@@ -10,9 +10,11 @@ return new class extends Migration
     {
         Schema::create('entries', function (Blueprint $table) {
             $table->id();
-            $table->string('url')->nullable(false);
+            $table->string('internal_id')->unique();
+            $table->string('url')->nullable(false)->unique();
             $table->string('title')->nullable(false);
-            $table->string('slug')->nullable(false);
+            $table->boolean('is_seen')->nullable(false)->default(false);
+            $table->boolean('is_favorite')->nullable(false)->default(false);
             $table->timestamps();
         });
     }
