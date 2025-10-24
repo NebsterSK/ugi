@@ -10,9 +10,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $internal_id
  * @property string $url
  * @property string $title
- * @property string $slug
- * @property int $is_seen
- * @property int $is_favorite
+ * @property bool $is_seen
+ * @property bool $is_favorite
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @method static \Database\Factories\EntryFactory factory($count = null, $state = [])
@@ -24,7 +23,6 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereInternalId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereIsFavorite($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereIsSeen($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereSlug($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereUrl($value)
