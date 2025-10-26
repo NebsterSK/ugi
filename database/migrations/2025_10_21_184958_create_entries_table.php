@@ -15,6 +15,8 @@ return new class extends Migration
             $table->string('title')->nullable(false);
             $table->boolean('is_seen')->nullable(false)->default(false);
             $table->boolean('is_favorite')->nullable(false)->default(false);
+            $table->boolean('is_ignored')->nullable(false)->default(false);
+            $table->string('comment')->nullable();
             $table->timestamps();
         });
     }
