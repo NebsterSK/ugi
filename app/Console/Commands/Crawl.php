@@ -78,9 +78,6 @@ class Crawl extends Command
             sleep(rand(3, 6));
         } while ($response->ok());
 
-
-
-
         return self::SUCCESS;
     }
 }

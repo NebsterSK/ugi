@@ -1,4 +1,4 @@
-@extends('_layout')
+@extends('layouts/app')
 
 @section('content')
     <div class="container">
@@ -8,9 +8,9 @@
 
         <hr>
 
-        <a href="{{ route('favorite', $entry->id) }}" class="btn btn-info">Favorite</a>
+        <a href="{{ route('entries.favorite', $entry->id) }}" class="btn btn-info">Favorite</a>
 
-        <a href="{{ route('ignore', $entry->id) }}" class="btn btn-secondary">Ignore</a>
+        <a href="{{ route('entries.ignore', $entry->id) }}" class="btn btn-secondary">Ignore</a>
 
         <hr>
 

@@ -13,7 +13,7 @@ class ParseController extends Controller
     {
         $entries = Entry::where('is_ignored', false)->orderBy('created_at', 'DESC')->get();
 
-        return view('index')->with('entries', $entries);
+        return view('entries.index')->with('entries', $entries);
     }
 
     public function show(Entry $entry): View
@@ -22,7 +22,7 @@ class ParseController extends Controller
             'is_seen' => true,
         ]);
 
-        return view('show')->with('entry', $entry);
+        return view('entries.show')->with('entry', $entry);
     }
 
     public function update(EntryUpdateRequest $request, Entry $entry): RedirectResponse
@@ -46,7 +46,7 @@ class ParseController extends Controller
     public function ignore(Entry $entry): RedirectResponse
     {
         $entry->update([
-            'is_ignored' => ! $entry->is_favorite,
+            'is_ignored' => ! $entry->is_ignored,
         ]);
 
         return back();
