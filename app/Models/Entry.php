@@ -12,16 +12,20 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $title
  * @property bool $is_seen
  * @property bool $is_favorite
+ * @property bool $is_ignored
+ * @property string|null $comment
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @method static \Database\Factories\EntryFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereComment($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereInternalId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereIsFavorite($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereIsIgnored($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereIsSeen($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereUpdatedAt($value)
@@ -36,5 +40,6 @@ class Entry extends Model
     protected $casts = [
         'is_seen' => 'boolean',
         'is_favorite' => 'boolean',
+        'is_ignored' => 'boolean',
     ];
 }

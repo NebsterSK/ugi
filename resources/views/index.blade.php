@@ -1,33 +1,37 @@
 @extends('_layout')
 
 @section('content')
-    <div class="container">
-        <h2>Favorite</h2>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-4">
+                <h2>Favorite</h2>
 
-        @foreach($entries->where('is_favorite', true)->where('is_seen', true) as $entry)
-            <p>
-                <a href="{{ route('show', $entry->id) }}">{{ $entry->title }}</a>
-            </p>
-        @endforeach
+                @foreach($entries->where('is_favorite', true)->where('is_seen', true) as $entry)
+                    <p>
+                        <a href="{{ route('show', $entry->id) }}">{{ $entry->title }}</a>
+                    </p>
+                @endforeach
+            </div>
 
-        <hr>
+            <div class="col-4">
+                <h2>New</h2>
 
-        <h2>New</h2>
+                @foreach($entries->where('is_seen', false)->where('is_favorite', false) as $entry)
+                    <p>
+                        <a href="{{ route('show', $entry->id) }}">{{ $entry->title }}</a>
+                    </p>
+                @endforeach
+            </div>
 
-        @foreach($entries->where('is_seen', false)->where('is_favorite', false) as $entry)
-            <p>
-                <a href="{{ route('show', $entry->id) }}">{{ $entry->title }}</a>
-            </p>
-        @endforeach
+            <div class="col-4">
+                <h2>Seen</h2>
 
-        <hr>
-
-        <h2>Seen</h2>
-
-        @foreach($entries->where('is_seen', true)->where('is_favorite', false) as $entry)
-            <p>
-                <a href="{{ route('show', $entry->id) }}">{{ $entry->title }}</a>
-            </p>
-        @endforeach
+                @foreach($entries->where('is_seen', true)->where('is_favorite', false) as $entry)
+                    <p>
+                        <a href="{{ route('show', $entry->id) }}">{{ $entry->title }}</a>
+                    </p>
+                @endforeach
+            </div>
+        </div>
     </div>
 @endsection
