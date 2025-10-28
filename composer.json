@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "nebstersk/ugi",
     "type": "project",
-    "description": "Ugi helps me to find a new home for my family.",
+    "description": "Ugi helps me find a new home for my family.",
     "keywords": [
         "laravel",
         "framework"
