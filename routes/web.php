@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\ParseController;
+use App\Http\Controllers\EntriesController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -9,14 +9,14 @@ Route::get('/', function () {
 
 Route::middleware('auth')->group(function () {
     Route::prefix('entries')->name('entries.')->group(function () {
-        Route::get('/', [ParseController::class, 'index'])->name('index');
-        Route::get('/{entry}', [ParseController::class, 'show'])->name('show');
-        Route::put('/{entry}', [ParseController::class, 'update'])->name('update');
-        Route::get('/{entry}/toggleFavorite', [ParseController::class, 'favorite'])->name('favorite');
-        Route::get('/{entry}/toggleIgnore', [ParseController::class, 'ignore'])->name('ignore');
+        Route::get('/', [EntriesController::class, 'index'])->name('index');
+        Route::get('/favorite', [EntriesController::class, 'favorite'])->name('favorite');
+        Route::get('/seen', [EntriesController::class, 'seen'])->name('seen');
+        Route::get('/{entry}', [EntriesController::class, 'show'])->name('show');
+        Route::put('/{entry}', [EntriesController::class, 'update'])->name('update');
+        Route::get('/{entry}/toggleFavorite', [EntriesController::class, 'toggleFavorite'])->name('favorite');
+        Route::get('/{entry}/toggleIgnore', [EntriesController::class, 'toggleIgnore'])->name('ignore');
     });
 });
-
-//Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Auth::routes();

@@ -10,6 +10,9 @@ class EntrySeeder extends Seeder
 {
     public function run(): void
     {
-        Entry::factory()->count(10)->create();
+        Entry::factory()->ignored()->count(5)->create();
+        Entry::factory()->seen()->count(20)->create();
+        Entry::factory()->favorite()->count(5)->create();
+        Entry::factory()->newState()->count(10)->create();
     }
 }

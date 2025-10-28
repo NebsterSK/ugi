@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="container">
-        <h1>New</h1>
+        <h1>Favorite</h1>
 
         @foreach($entries as $entry)
             <p>
