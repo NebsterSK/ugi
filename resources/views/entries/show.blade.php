@@ -8,9 +8,9 @@
 
         <hr>
 
-        <a href="{{ route('entries.favorite', $entry->id) }}" class="btn btn-info">Favorite</a>
+        <a href="{{ route('entries.toggleFavorite', $entry->id) }}" class="btn btn-info">Favorite</a>
 
-        <a href="{{ route('entries.ignore', $entry->id) }}" class="btn btn-secondary">Ignore</a>
+        <a href="{{ route('entries.toggleIgnore', $entry->id) }}" class="btn btn-secondary">Ignore</a>
 
         <hr>
 

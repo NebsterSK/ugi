@@ -14,8 +14,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/seen', [EntriesController::class, 'seen'])->name('seen');
         Route::get('/{entry}', [EntriesController::class, 'show'])->name('show');
         Route::put('/{entry}', [EntriesController::class, 'update'])->name('update');
-        Route::get('/{entry}/toggleFavorite', [EntriesController::class, 'toggleFavorite'])->name('favorite');
-        Route::get('/{entry}/toggleIgnore', [EntriesController::class, 'toggleIgnore'])->name('ignore');
+        Route::get('/{entry}/toggleFavorite', [EntriesController::class, 'toggleFavorite'])->name('toggleFavorite');
+        Route::get('/{entry}/toggleIgnore', [EntriesController::class, 'toggleIgnore'])->name('toggleIgnore');
     });
 });
 
