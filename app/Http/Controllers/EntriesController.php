@@ -11,33 +11,21 @@ class EntriesController extends Controller
 {
     public function index(): View
     {
-        $entries = Entry::where([
-            'is_ignored' => false,
-            'is_seen' => false,
-            'is_favorite' => false,
-        ])->orderBy('created_at', 'DESC')->get();
+        $entries = Entry::newState()->orderBy('created_at', 'DESC')->get();
 
         return view('entries.index')->with('entries', $entries);
     }
 
     public function favorite(): View
     {
-        $entries = Entry::where([
-            'is_ignored' => false,
-            'is_seen' => true,
-            'is_favorite' => true,
-        ])->orderBy('created_at', 'DESC')->get();
+        $entries = Entry::favorite()->orderBy('favorited_at', 'DESC')->orderBy('created_at', 'DESC')->get();
 
         return view('entries.favorite')->with('entries', $entries);
     }
 
     public function seen(): View
     {
-        $entries = Entry::where([
-            'is_ignored' => false,
-            'is_seen' => true,
-            'is_favorite' => false,
-        ])->orderBy('created_at', 'DESC')->get();
+        $entries = Entry::seen()->orderBy('seen_at', 'DESC')->orderBy('created_at', 'DESC')->get();
 
         return view('entries.seen')->with('entries', $entries);
     }
@@ -45,7 +33,7 @@ class EntriesController extends Controller
     public function show(Entry $entry): View
     {
         $entry->update([
-            'is_seen' => true,
+            'seen_at' => now(),
         ]);
 
         return view('entries.show')->with('entry', $entry);
@@ -63,7 +51,7 @@ class EntriesController extends Controller
     public function toggleFavorite(Entry $entry): RedirectResponse
     {
         $entry->update([
-            'is_favorite' => ! $entry->is_favorite,
+            'favorited_at' => $entry->favorited_at ? null : now(),
         ]);
 
         return back();

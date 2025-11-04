@@ -15,8 +15,8 @@ class EntryFactory extends Factory
             'internal_id' => $this->faker->md5(),
             'url' => $this->faker->url(),
             'title' => $this->faker->sentence(),
-            'is_seen' => $this->faker->boolean(),
-            'is_favorite' => $this->faker->boolean(),
+            'seen_at' => $this->faker->optional(0.2)->dateTime(),
+            'favorited_at' => $this->faker->optional(0.2)->dateTime(),
             'is_ignored' => $this->faker->boolean(),
             'comment' => $this->faker->optional(0.2)->sentence(),
         ];
@@ -26,8 +26,8 @@ class EntryFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'is_seen' => false,
-                'is_favorite' => false,
+                'seen_at' => null,
+                'favorited_at' => null,
                 'is_ignored' => false,
             ];
         });
@@ -37,8 +37,8 @@ class EntryFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'is_seen' => true,
-                'is_favorite' => false,
+                'seen_at' => now(),
+                'favorited_at' => null,
                 'is_ignored' => false,
             ];
         });
@@ -48,8 +48,8 @@ class EntryFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'is_seen' => true,
-                'is_favorite' => false,
+                'seen_at' => null,
+                'favorited_at' => null,
                 'is_ignored' => true,
             ];
         });
@@ -59,8 +59,8 @@ class EntryFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'is_seen' => true,
-                'is_favorite' => true,
+                'seen_at' => now(),
+                'favorited_at' => now(),
                 'is_ignored' => false,
             ];
         });

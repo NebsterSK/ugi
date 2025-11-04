@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\NotIgnoredScope;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,36 +14,58 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $internal_id
  * @property string $url
  * @property string $title
- * @property bool $is_seen
- * @property bool $is_favorite
  * @property bool $is_ignored
  * @property string|null $comment
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $seen_at
+ * @property \Illuminate\Support\Carbon|null $favorited_at
  * @method static \Database\Factories\EntryFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereComment($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereInternalId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereIsFavorite($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereIsIgnored($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereIsSeen($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereTitle($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Entry whereUrl($value)
+ * @method static Builder<static>|Entry favorite()
+ * @method static Builder<static>|Entry newModelQuery()
+ * @method static Builder<static>|Entry newQuery()
+ * @method static Builder<static>|Entry newState()
+ * @method static Builder<static>|Entry query()
+ * @method static Builder<static>|Entry seen()
+ * @method static Builder<static>|Entry whereComment($value)
+ * @method static Builder<static>|Entry whereCreatedAt($value)
+ * @method static Builder<static>|Entry whereFavoritedAt($value)
+ * @method static Builder<static>|Entry whereId($value)
+ * @method static Builder<static>|Entry whereInternalId($value)
+ * @method static Builder<static>|Entry whereIsIgnored($value)
+ * @method static Builder<static>|Entry whereSeenAt($value)
+ * @method static Builder<static>|Entry whereTitle($value)
+ * @method static Builder<static>|Entry whereUpdatedAt($value)
+ * @method static Builder<static>|Entry whereUrl($value)
  * @mixin \Eloquent
  */
+#[ScopedBy(NotIgnoredScope::class)]
 class Entry extends Model
 {
     /** @use HasFactory<\Database\Factories\EntryFactory> */
     use HasFactory;
 
     protected $casts = [
-        'is_seen' => 'boolean',
-        'is_favorite' => 'boolean',
+        'seen_at' => 'datetime:Y-m-d H:i:s',
+        'favorited_at' => 'datetime:Y-m-d H:i:s',
         'is_ignored' => 'boolean',
     ];
+
+    #[Scope]
+    protected function newState(Builder $query): void
+    {
+        $query->whereNull('seen_at')->whereNull('favorited_at');
+    }
+
+    #[Scope]
+    protected function seen(Builder $query): void
+    {
+        $query->whereNotNull('seen_at')->whereNull('favorited_at');
+    }
+
+    #[Scope]
+    protected function favorite(Builder $query): void
+    {
+        $query->whereNotNull('seen_at')->whereNotNull('favorited_at');
+    }
 }
