@@ -14,12 +14,17 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $internal_id
  * @property string $url
  * @property string $title
+ * @property \Illuminate\Support\Carbon|null $seen_at
+ * @property \Illuminate\Support\Carbon|null $favorited_at
  * @property bool $is_ignored
+ * @property int $rooms
+ * @property string $street
+ * @property string $area
+ * @property int $price
+ * @property int $price_per_sqm
  * @property string|null $comment
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property \Illuminate\Support\Carbon|null $seen_at
- * @property \Illuminate\Support\Carbon|null $favorited_at
  * @method static \Database\Factories\EntryFactory factory($count = null, $state = [])
  * @method static Builder<static>|Entry favorite()
  * @method static Builder<static>|Entry newModelQuery()
@@ -27,13 +32,18 @@ use Illuminate\Database\Eloquent\Model;
  * @method static Builder<static>|Entry newState()
  * @method static Builder<static>|Entry query()
  * @method static Builder<static>|Entry seen()
+ * @method static Builder<static>|Entry whereArea($value)
  * @method static Builder<static>|Entry whereComment($value)
  * @method static Builder<static>|Entry whereCreatedAt($value)
  * @method static Builder<static>|Entry whereFavoritedAt($value)
  * @method static Builder<static>|Entry whereId($value)
  * @method static Builder<static>|Entry whereInternalId($value)
  * @method static Builder<static>|Entry whereIsIgnored($value)
+ * @method static Builder<static>|Entry wherePrice($value)
+ * @method static Builder<static>|Entry wherePricePerSqm($value)
+ * @method static Builder<static>|Entry whereRooms($value)
  * @method static Builder<static>|Entry whereSeenAt($value)
+ * @method static Builder<static>|Entry whereStreet($value)
  * @method static Builder<static>|Entry whereTitle($value)
  * @method static Builder<static>|Entry whereUpdatedAt($value)
  * @method static Builder<static>|Entry whereUrl($value)
