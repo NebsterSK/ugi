@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::table('entries', function (Blueprint $table) {
             $table->tinyInteger('rooms')->unsigned()->nullable(false)->after('is_ignored');
             $table->string('street')->nullable(false)->after('rooms');
-            $table->string('area')->nullable(false)->after('street');
+            $table->string('district')->nullable(false)->after('street');
+            $table->integer('area')->unsigned()->nullable(false)->after('district');
             $table->integer('price')->unsigned()->nullable(false)->after('area');
             $table->integer('price_per_sqm')->unsigned()->nullable(false)->after('price');
         });

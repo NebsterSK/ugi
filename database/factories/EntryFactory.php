@@ -18,6 +18,7 @@ class EntryFactory extends Factory
             'seen_at' => $this->faker->optional(0.2)->dateTime(),
             'favorited_at' => $this->faker->optional(0.2)->dateTime(),
             'is_ignored' => $this->faker->boolean(),
+            // TODO
             'comment' => $this->faker->optional(0.2)->sentence(),
         ];
     }

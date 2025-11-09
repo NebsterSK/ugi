@@ -19,7 +19,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $is_ignored
  * @property int $rooms
  * @property string $street
- * @property string $area
+ * @property string $district
+ * @property int $area
  * @property int $price
  * @property int $price_per_sqm
  * @property string|null $comment
@@ -35,6 +36,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static Builder<static>|Entry whereArea($value)
  * @method static Builder<static>|Entry whereComment($value)
  * @method static Builder<static>|Entry whereCreatedAt($value)
+ * @method static Builder<static>|Entry whereDistrict($value)
  * @method static Builder<static>|Entry whereFavoritedAt($value)
  * @method static Builder<static>|Entry whereId($value)
  * @method static Builder<static>|Entry whereInternalId($value)

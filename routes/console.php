@@ -1,6 +1,6 @@
 <?php
 
-use App\Console\Commands\Crawl;
+use App\Console\Commands\Sniff;
 use Illuminate\Support\Facades\Schedule;
 
-Schedule::command(Crawl::class)->dailyAt('05:01')->environments(['production']);
+Schedule::command(Sniff::class)->dailyAt('05:03')->environments(['production']);
