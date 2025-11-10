@@ -13,12 +13,12 @@ use Throwable;
 class Sniff extends Command
 {
     protected $signature = 'sniff';
-    protected $description = 'Sniff Nehnutelnosti to find us new home.';
+    protected $description = 'Sniff us a new home.';
 
-    protected const string BASE_URL = 'https://www.nehnutelnosti.sk/vysledky/predaj?locations=100012514&locations=100012524&locations=100012513&locations=100012511&categories=300001&categories=14&priceTo=270000&areaFrom=70&priceFrom=220000';
+    protected const string BASE_URL = 'https://www.nehnutelnosti.sk/vysledky/predaj?locations=100012514&locations=100012524&locations=100012513&locations=100012511&categories=300001&categories=14&priceTo=280000&areaFrom=70&priceFrom=240000';
 
     protected const string SELECTOR_ENTRY = 'div.MuiGrid2-root.MuiGrid2-direction-xs-row.MuiGrid2-grid-xs-12.MuiGrid2-grid-md-8';
-    protected const string SELECTOR_URL = 'a.MuiBox-root';
+    protected const string SELECTOR_ENTRY_URL = 'a.MuiBox-root';
     protected const string SELECTOR_TITLE = 'h2.MuiTypography-root.MuiTypography-h4';
     protected const string SELECTOR_ADDRESS = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2.MuiTypography-noWrap';
     protected const string SELECTOR_ROOMS = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2.MuiTypography-noWrap';
@@ -44,7 +44,7 @@ class Sniff extends Command
             $crawler = new Crawler($response->body());
 
             $crawler->filter(self::SELECTOR_ENTRY)->each(function (Crawler $node) {
-                $entryUrl = $node->filter(self::SELECTOR_URL)->first()->attr('href');
+                $entryUrl = $node->filter(self::SELECTOR_ENTRY_URL)->first()->attr('href');
                 $internalId = Str::of($entryUrl)->after('https://www.nehnutelnosti.sk/detail/')->before('/')->toString();
 
                 $title = $node->filter(self::SELECTOR_TITLE)->first()->text();

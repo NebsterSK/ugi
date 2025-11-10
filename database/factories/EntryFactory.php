@@ -18,7 +18,12 @@ class EntryFactory extends Factory
             'seen_at' => $this->faker->optional(0.2)->dateTime(),
             'favorited_at' => $this->faker->optional(0.2)->dateTime(),
             'is_ignored' => $this->faker->boolean(),
-            // TODO
+            'rooms' => $this->faker->randomElement([3, 4]),
+            'street' => $this->faker->streetName(),
+            'district' => $this->faker->randomElement(['Petržalka', 'Rača', 'Nové Mesto', 'Ružinov']),
+            'area' => $this->faker->numberBetween(70, 100),
+            'price' => $this->faker->numberBetween(240000, 280000),
+            'price_per_sqm' => $this->faker->numberBetween(2000, 4000),
             'comment' => $this->faker->optional(0.2)->sentence(),
         ];
     }
