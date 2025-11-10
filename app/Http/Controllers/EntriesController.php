@@ -11,23 +11,17 @@ class EntriesController extends Controller
 {
     public function index(): View
     {
-        $entries = Entry::newState()->orderBy('created_at', 'DESC')->get();
-
-        return view('entries.index')->with('entries', $entries);
+        return view('entries.index');
     }
 
     public function favorite(): View
     {
-        $entries = Entry::favorite()->orderBy('favorited_at', 'DESC')->orderBy('created_at', 'DESC')->get();
-
-        return view('entries.favorite')->with('entries', $entries);
+        return view('entries.favorite');
     }
 
     public function seen(): View
     {
-        $entries = Entry::seen()->orderBy('seen_at', 'DESC')->orderBy('created_at', 'DESC')->get();
-
-        return view('entries.seen')->with('entries', $entries);
+        return view('entries.seen');
     }
 
     public function show(Entry $entry): View
@@ -63,6 +57,6 @@ class EntriesController extends Controller
             'is_ignored' => ! $entry->is_ignored,
         ]);
 
-        return back();
+        return to_route('entries.index');
     }
 }
