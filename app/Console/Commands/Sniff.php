@@ -15,7 +15,7 @@ class Sniff extends Command
     protected $signature = 'sniff';
     protected $description = 'Sniff us a new home.';
 
-    protected const string BASE_URL = 'https://www.nehnutelnosti.sk/vysledky/predaj?locations=100012514&locations=100012524&locations=100012513&locations=100012511&categories=300001&categories=14&priceTo=280000&areaFrom=70&priceFrom=240000';
+    protected const string BASE_URL = 'https://www.nehnutelnosti.sk/vysledky/4-izbove-byty/predaj?locations=100012514&locations=100012524&locations=100012513&locations=100012511&priceTo=280000&areaFrom=75&priceFrom=240000';
 
     protected const string SELECTOR_ENTRY = 'div.MuiGrid2-root.MuiGrid2-direction-xs-row.MuiGrid2-grid-xs-12.MuiGrid2-grid-md-8';
     protected const string SELECTOR_ENTRY_URL = 'a.MuiBox-root';

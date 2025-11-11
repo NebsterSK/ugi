@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @method static \Database\Factories\EntryFactory factory($count = null, $state = [])
  * @method static Builder<static>|Entry favorite()
+ * @method static Builder<static>|Entry ignored()
  * @method static Builder<static>|Entry newModelQuery()
  * @method static Builder<static>|Entry newQuery()
  * @method static Builder<static>|Entry newState()
@@ -79,5 +80,11 @@ class Entry extends Model
     protected function favorite(Builder $query): void
     {
         $query->whereNotNull('seen_at')->whereNotNull('favorited_at');
+    }
+
+    #[Scope]
+    protected function ignored(Builder $query): void
+    {
+        $query->where('is_ignored', true);
     }
 }

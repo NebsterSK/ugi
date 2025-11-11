@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\Entry;
@@ -16,7 +17,7 @@ class NewEntryTable extends DataTableComponent
     {
         $this->setPrimaryKey('id');
         $this->setTableAttributes([
-            'class' => 'table-bordered table-striped table-hover',
+            'class' => 'table-bordered table-striped table-hover text-nowrap',
         ]);
         $this->setDefaultSort('id', 'desc');
     }
@@ -30,7 +31,7 @@ class NewEntryTable extends DataTableComponent
 
             LinkColumn::make('Title')
                 ->searchable(fn(Builder $query, $searchTerm) => $query->orWhere('title', 'LIKE', "%{$searchTerm}%"))
-                ->title(fn($row) => $row->title)
+                ->title(fn($row) => Str::of($row->title)->limit(70))
                 ->location(fn($row) => route('entries.show', $row)),
             Column::make("Rooms", "rooms")
                 ->searchable()

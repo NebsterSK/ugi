@@ -18,7 +18,7 @@ class SeenEntryTable extends DataTableComponent
         $this->setTableAttributes([
             'class' => 'table-bordered table-striped table-hover',
         ]);
-        $this->setDefaultSort('id', 'desc');
+        $this->setDefaultSort('seen_at', 'desc');
     }
 
     public function columns(): array
@@ -49,6 +49,10 @@ class SeenEntryTable extends DataTableComponent
                 ->searchable()
                 ->sortable()
                 ->format(fn($value, Entry $row, Column $column) => number_format($value, 0, ',', ' ')),
+            Column::make("Seen at", "seen_at")
+                ->searchable()
+                ->sortable()
+                ->format(fn($value, Entry $row, Column $column) => $value->format('Y-m-d H:i')),
 
             Column::make("Created at", "created_at")
                 ->searchable()
