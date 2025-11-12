@@ -16,7 +16,7 @@ class SeenEntryTable extends DataTableComponent
     {
         $this->setPrimaryKey('id');
         $this->setTableAttributes([
-            'class' => 'table-bordered table-striped table-hover',
+            'class' => 'table-bordered table-striped table-hover text-nowrap',
         ]);
         $this->setDefaultSort('seen_at', 'desc');
     }

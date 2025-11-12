@@ -6,6 +6,7 @@ use App\Models\Scopes\NotIgnoredScope;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $comment
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read bool $is_favorited
  * @method static \Database\Factories\EntryFactory factory($count = null, $state = [])
  * @method static Builder<static>|Entry favorite()
  * @method static Builder<static>|Entry ignored()
@@ -64,6 +66,8 @@ class Entry extends Model
         'is_ignored' => 'boolean',
     ];
 
+    // Scopes
+
     #[Scope]
     protected function newState(Builder $query): void
     {
@@ -86,5 +90,14 @@ class Entry extends Model
     protected function ignored(Builder $query): void
     {
         $query->where('is_ignored', true);
+    }
+
+    // Accessors & Mutators
+
+    public function isFavorited(): Attribute
+    {
+        return Attribute::make(get: function(): bool {
+            return (bool) $this->favorited_at;
+        });
     }
 }

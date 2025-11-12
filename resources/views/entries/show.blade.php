@@ -1,3 +1,7 @@
+@php
+/** @var App\Models\Entry $entry */
+@endphp
+
 @extends('layouts/app')
 
 @section('content')
@@ -8,9 +12,11 @@
 
         <hr>
 
-        <a href="{{ route('entries.toggleFavorite', $entry->id) }}" class="btn btn-info">Favorite</a>
-
-        <a href="{{ route('entries.toggleIgnore', $entry->id) }}" class="btn btn-secondary">Ignore</a>
+        @if($entry->is_favorited)
+            <a href="{{ route('entries.toggleFavorite', $entry->id) }}" class="btn btn-success"><i class="fa-solid fa-star"></i></a>
+        @else
+            <a href="{{ route('entries.toggleFavorite', $entry->id) }}" class="btn btn-outline-secondary"><i class="fa-regular fa-star"></i></a>
+        @endif
 
         <hr>
 
@@ -42,5 +48,9 @@
 
             <button type="submit" class="btn btn-primary">Save</button>
         </form>
+
+        <hr>
+
+        <a href="{{ route('entries.toggleIgnore', $entry->id) }}" class="btn btn-outline-danger"><i class="fa-regular fa-trash-can"></i></a>
     </div>
 @endsection

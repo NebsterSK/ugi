@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="container-fluid">
-        <h1>Seen</h1>
+        <h1><i class="fa-solid fa-eye"></i> Seen</h1>
 
         <livewire:SeenEntryTable />
     </div>
