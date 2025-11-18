@@ -60,7 +60,7 @@ class NewEntryTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        return Entry::query()->newState()->select([
+        return Entry::newState()->select([
             'title',
             'created_at',
         ]);

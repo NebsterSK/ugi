@@ -14,7 +14,7 @@ class Bury extends Command
     {
         Entry::ignored()->delete();
 
-        Entry::where('updated_at', '<', now()->subHours(25))->delete();
+        Entry::notIgnored()->where('updated_at', '<', now()->subHours(25))->delete();
 
         return self::SUCCESS;
     }

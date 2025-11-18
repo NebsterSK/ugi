@@ -12,7 +12,7 @@
 
         <hr>
 
-        @if($entry->is_favorited)
+        @if($entry->is_favorite)
             <a href="{{ route('entries.toggleFavorite', $entry->id) }}" class="btn btn-success"><i class="fa-solid fa-star"></i></a>
         @else
             <a href="{{ route('entries.toggleFavorite', $entry->id) }}" class="btn btn-outline-secondary"><i class="fa-regular fa-star"></i></a>

@@ -64,7 +64,7 @@ class FavoriteEntryTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        return Entry::query()->favorite()->select([
+        return Entry::favorite()->select([
             'title',
             'created_at',
         ]);

@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\NotIgnoredScope;
 use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,13 +25,14 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $comment
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read bool $is_favorited
+ * @property-read bool $is_favorite
  * @method static \Database\Factories\EntryFactory factory($count = null, $state = [])
  * @method static Builder<static>|Entry favorite()
  * @method static Builder<static>|Entry ignored()
  * @method static Builder<static>|Entry newModelQuery()
  * @method static Builder<static>|Entry newQuery()
  * @method static Builder<static>|Entry newState()
+ * @method static Builder<static>|Entry notIgnored()
  * @method static Builder<static>|Entry query()
  * @method static Builder<static>|Entry seen()
  * @method static Builder<static>|Entry whereArea($value)
@@ -54,7 +53,6 @@ use Illuminate\Database\Eloquent\Model;
  * @method static Builder<static>|Entry whereUrl($value)
  * @mixin \Eloquent
  */
-#[ScopedBy(NotIgnoredScope::class)]
 class Entry extends Model
 {
     /** @use HasFactory<\Database\Factories\EntryFactory> */
@@ -71,19 +69,19 @@ class Entry extends Model
     #[Scope]
     protected function newState(Builder $query): void
     {
-        $query->whereNull('seen_at')->whereNull('favorited_at');
+        $query->whereNull('seen_at')->whereNull('favorited_at')->where('is_ignored', false);
     }
 
     #[Scope]
     protected function seen(Builder $query): void
     {
-        $query->whereNotNull('seen_at')->whereNull('favorited_at');
+        $query->whereNotNull('seen_at')->whereNull('favorited_at')->where('is_ignored', false);
     }
 
     #[Scope]
     protected function favorite(Builder $query): void
     {
-        $query->whereNotNull('seen_at')->whereNotNull('favorited_at');
+        $query->whereNotNull('seen_at')->whereNotNull('favorited_at')->where('is_ignored', false);
     }
 
     #[Scope]
@@ -92,9 +90,15 @@ class Entry extends Model
         $query->where('is_ignored', true);
     }
 
+    #[Scope]
+    protected function notIgnored(Builder $query): void
+    {
+        $query->where('is_ignored', false);
+    }
+
     // Accessors & Mutators
 
-    public function isFavorited(): Attribute
+    public function isFavorite(): Attribute
     {
         return Attribute::make(get: function(): bool {
             return (bool) $this->favorited_at;

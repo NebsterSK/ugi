@@ -63,7 +63,7 @@ class SeenEntryTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        return Entry::query()->seen()->select([
+        return Entry::seen()->select([
             'title',
             'created_at',
         ]);
