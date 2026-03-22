@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Parse;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Parse>
+ * @extends Factory<Parse>
  */
 class ParseFactory extends Factory
 {

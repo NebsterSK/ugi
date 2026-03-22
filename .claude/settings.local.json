@@ -1,0 +1,11 @@
+{
+  "enabledMcpjsonServers": [
+    "laravel-boost",
+    "herd"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(grep -oE 'Bratislava[^\"\"\"\"<]{0,50}' E:/webs/ugi/response.html)"
+    ]
+  }
+}

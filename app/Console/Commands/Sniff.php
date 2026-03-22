@@ -13,17 +13,25 @@ use Throwable;
 class Sniff extends Command
 {
     protected $signature = 'sniff';
+
     protected $description = 'Sniff us a new home.';
 
     protected const string BASE_URL = 'https://www.nehnutelnosti.sk/vysledky/4-izbove-byty/predaj?locations=100012514&locations=100012524&locations=100012513&locations=100012511&priceTo=280000&areaFrom=75&priceFrom=240000';
 
-    protected const string SELECTOR_ENTRY = 'div.MuiGrid2-root.MuiGrid2-direction-xs-row.MuiGrid2-grid-xs-12.MuiGrid2-grid-md-8';
+    protected const string SELECTOR_ENTRY = 'div.MuiGrid-root.MuiGrid-direction-xs-row.MuiGrid-grid-xs-12.MuiGrid-grid-md-8';
+
     protected const string SELECTOR_ENTRY_URL = 'a.MuiBox-root';
+
     protected const string SELECTOR_TITLE = 'h2.MuiTypography-root.MuiTypography-h4';
+
     protected const string SELECTOR_ADDRESS = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2.MuiTypography-noWrap';
+
     protected const string SELECTOR_ROOMS = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2.MuiTypography-noWrap';
+
     protected const string SELECTOR_AREA = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2';
+
     protected const string SELECTOR_PRICE = 'a.MuiStack-root > p.MuiTypography-root.MuiTypography-h5';
+
     protected const string SELECTOR_PRICE_PER_SQM = 'a.MuiStack-root > p.MuiTypography-root.MuiTypography-label1';
 
     public function handle(): int
@@ -34,16 +42,24 @@ class Sniff extends Command
             if ($page === 1) {
                 $url = self::BASE_URL;
             } else {
-                $url = self::BASE_URL . '&page=' . $page;
+                $url = self::BASE_URL.'&page='.$page;
             }
 
-            $this->info('Requesting: ' . $url);
+            $this->info('Requesting: '.$url);
 
             $response = Http::get($url);
-
             $crawler = new Crawler($response->body());
 
-            $crawler->filter(self::SELECTOR_ENTRY)->each(function (Crawler $node) {
+            $entries = $crawler->filter(self::SELECTOR_ENTRY);
+
+            if ($entries->count() === 0) {
+                $this->info('No entries found on page '.$page.', stopping.');
+                break;
+            }
+
+            $entries->each(function (Crawler $node) {
+                $this->line('Processing entry...');
+
                 $entryUrl = $node->filter(self::SELECTOR_ENTRY_URL)->first()->attr('href');
                 $internalId = Str::of($entryUrl)->after('https://www.nehnutelnosti.sk/detail/')->before('/')->toString();
 
@@ -96,10 +112,10 @@ class Sniff extends Command
                         'title' => $title,
                     ]);
 
-                    $this->error('Entry was not created or updated: ' . $title);
+                    $this->error('Entry was not created or updated: '.$title);
                 }
 
-                $this->line('Entry created or updated: ' . $title);
+                $this->line('Entry created or updated: '.$title);
             });
 
             $page++;

@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 class Bury extends Command
 {
     protected $signature = 'bury';
+
     protected $description = 'Bury old entries.';
 
     public function handle(): int

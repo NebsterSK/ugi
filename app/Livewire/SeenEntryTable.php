@@ -2,10 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Models\Entry;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\Entry;
 use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 
 class SeenEntryTable extends DataTableComponent
@@ -24,40 +24,40 @@ class SeenEntryTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("ID", "id")
+            Column::make('ID', 'id')
                 ->searchable()
                 ->sortable(),
 
             LinkColumn::make('Title')
-                ->searchable(fn(Builder $query, $searchTerm) => $query->orWhere('title', 'LIKE', "%{$searchTerm}%"))
-                ->title(fn($row) => $row->title)
-                ->location(fn($row) => route('entries.show', $row)),
-            Column::make("Rooms", "rooms")
+                ->searchable(fn (Builder $query, $searchTerm) => $query->orWhere('title', 'LIKE', "%{$searchTerm}%"))
+                ->title(fn ($row) => $row->title)
+                ->location(fn ($row) => route('entries.show', $row)),
+            Column::make('Rooms', 'rooms')
                 ->searchable()
                 ->sortable(),
-            Column::make("Area", "area")
+            Column::make('Area', 'area')
                 ->searchable()
                 ->sortable(),
-            Column::make("District", "district")
+            Column::make('District', 'district')
                 ->searchable()
                 ->sortable(),
-            Column::make("Price", "price")
+            Column::make('Price', 'price')
                 ->searchable()
                 ->sortable()
-                ->format(fn($value, Entry $row, Column $column) => number_format($value, 0, ',', ' ')),
-            Column::make("Price per m2", "price_per_sqm")
+                ->format(fn ($value, Entry $row, Column $column) => number_format($value, 0, ',', ' ')),
+            Column::make('Price per m2', 'price_per_sqm')
                 ->searchable()
                 ->sortable()
-                ->format(fn($value, Entry $row, Column $column) => number_format($value, 0, ',', ' ')),
-            Column::make("Seen at", "seen_at")
+                ->format(fn ($value, Entry $row, Column $column) => number_format($value, 0, ',', ' ')),
+            Column::make('Seen at', 'seen_at')
                 ->searchable()
                 ->sortable()
-                ->format(fn($value, Entry $row, Column $column) => $value->format('Y-m-d H:i')),
+                ->format(fn ($value, Entry $row, Column $column) => $value->format('Y-m-d H:i')),
 
-            Column::make("Created at", "created_at")
+            Column::make('Created at', 'created_at')
                 ->searchable()
                 ->sortable()
-                ->format(fn($value, Entry $row, Column $column) => $value->format('Y-m-d')),
+                ->format(fn ($value, Entry $row, Column $column) => $value->format('Y-m-d')),
         ];
     }
 
