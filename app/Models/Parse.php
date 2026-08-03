@@ -12,7 +12,6 @@ use Illuminate\Support\Carbon;
  * @property string $url
  * @property string $content
  * @property Carbon $created_at
- *
  * @method static \Database\Factories\ParseFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Parse newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Parse newQuery()
@@ -21,7 +20,6 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Parse whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Parse whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Parse whereUrl($value)
- *
  * @mixin \Eloquent
  */
 class Parse extends Model

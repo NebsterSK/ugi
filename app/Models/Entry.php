@@ -28,7 +28,6 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read bool $is_favorite
- *
  * @method static \Database\Factories\EntryFactory factory($count = null, $state = [])
  * @method static Builder<static>|Entry favorite()
  * @method static Builder<static>|Entry ignored()
@@ -54,7 +53,6 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|Entry whereTitle($value)
  * @method static Builder<static>|Entry whereUpdatedAt($value)
  * @method static Builder<static>|Entry whereUrl($value)
- *
  * @mixin \Eloquent
  */
 class Entry extends Model
