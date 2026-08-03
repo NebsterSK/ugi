@@ -157,7 +157,7 @@
                                      'label' => $month,
                                      'value' => $median,
                                      'display' => $median ? $number($median) : '–',
-                                     'title' => $median ? "{$month}: € {$number($median)} / m²" : "{$month}: no apartments",
+                                     'title' => $median ? $month.': € '.$number($median).' / m²' : $month.': no apartments',
                                  ])->values()->all()" />
 
                     <p class="text-muted small mt-3 mb-0">
