@@ -23,9 +23,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [FiltersController::class, 'index'])->name('index');
         Route::get('/create', [FiltersController::class, 'create'])->name('create');
         Route::post('/', [FiltersController::class, 'store'])->name('store');
+        Route::get('/{filter}/duplicate', [FiltersController::class, 'duplicate'])->name('duplicate');
         Route::get('/{filter}/edit', [FiltersController::class, 'edit'])->name('edit');
         Route::put('/{filter}', [FiltersController::class, 'update'])->name('update');
         Route::delete('/{filter}', [FiltersController::class, 'destroy'])->name('destroy');
+        Route::post('/{filter}/run', [FiltersController::class, 'run'])->name('run');
         Route::get('/{filter}/toggleActive', [FiltersController::class, 'toggleActive'])->name('toggleActive');
     });
 });

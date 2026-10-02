@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\FilterRequest;
+use App\Jobs\SniffFilterJob;
 use App\Models\Filter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -26,6 +27,11 @@ class FiltersController extends Controller
         return to_route('filters.index');
     }
 
+    public function duplicate(Filter $filter): View
+    {
+        return view('filters.create')->with('filter', $filter->replicate()->fill(['name' => null]));
+    }
+
     public function edit(Filter $filter): View
     {
         return view('filters.edit')->with('filter', $filter);
@@ -43,6 +49,13 @@ class FiltersController extends Controller
         $filter->delete();
 
         return to_route('filters.index');
+    }
+
+    public function run(Filter $filter): RedirectResponse
+    {
+        SniffFilterJob::dispatch($filter);
+
+        return back()->with('status', 'Sniffing "'.$filter->name.'" started, new entries will show up shortly.');
     }
 
     public function toggleActive(Filter $filter): RedirectResponse

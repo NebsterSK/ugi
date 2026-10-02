@@ -2,9 +2,12 @@
 
 use App\Enums\Location;
 use App\Enums\PropertyType;
+use App\Jobs\SniffFilterJob;
 use App\Models\Filter;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 
 uses(RefreshDatabase::class);
 
@@ -27,10 +30,12 @@ it('requires authentication', function (string $method, string $route) {
     ['GET', 'filters.index'],
     ['GET', 'filters.create'],
     ['POST', 'filters.store'],
+    ['GET', 'filters.duplicate'],
     ['GET', 'filters.edit'],
     ['PUT', 'filters.update'],
     ['DELETE', 'filters.destroy'],
     ['GET', 'filters.toggleActive'],
+    ['POST', 'filters.run'],
 ]);
 
 it('lists filters', function () {
@@ -120,6 +125,65 @@ it('validates the filter', function (array $data, string $invalidField) {
     'non-numeric area' => [['area_from' => 'big'], 'area_from'],
 ]);
 
+it('requires a unique name', function () {
+    Filter::factory()->create(['name' => 'Taken']);
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('filters.store'), [
+            'name' => 'Taken',
+            'property_type' => '4-izbove-byty',
+            'locations' => ['100012514'],
+        ])
+        ->assertSessionHasErrors(['name' => 'A filter with this name already exists.']);
+
+    expect(Filter::count())->toBe(1);
+});
+
+it('allows an updated filter to keep its own name but not take another one', function () {
+    $filter = Filter::factory()->create(['name' => 'Mine']);
+    Filter::factory()->create(['name' => 'Taken']);
+
+    $this->actingAs(User::factory()->create());
+
+    $data = ['property_type' => '4-izbove-byty', 'locations' => ['100012514']];
+
+    $this->put(route('filters.update', $filter), ['name' => 'Mine', ...$data])->assertSessionHasNoErrors();
+    $this->put(route('filters.update', $filter), ['name' => 'Taken', ...$data])->assertSessionHasErrors('name');
+});
+
+it('enforces a unique name in the database', function () {
+    Filter::factory()->create(['name' => 'Taken']);
+
+    Filter::factory()->create(['name' => 'Taken']);
+})->throws(UniqueConstraintViolationException::class);
+
+it('opens the create form prefilled from a duplicated filter without its name', function () {
+    $filter = Filter::factory()->create([
+        'name' => 'Original',
+        'property_type' => PropertyType::ThreeRoomApartment,
+        'locations' => [Location::Raca],
+        'price_from' => 210000,
+        'price_to' => 260000,
+        'area_from' => 72,
+    ]);
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('filters.duplicate', $filter))
+        ->assertSuccessful()
+        ->assertSee('New filter')
+        ->assertViewHas('filter', fn (Filter $duplicate): bool => ! $duplicate->exists
+            && $duplicate->name === null
+            && $duplicate->property_type === PropertyType::ThreeRoomApartment
+            && $duplicate->locations->all() === [Location::Raca]
+            && $duplicate->price_from === 210000
+            && $duplicate->price_to === 260000
+            && $duplicate->area_from === 72)
+        ->assertDontSee('value="Original"', false)
+        ->assertSee('value="210000"', false);
+
+    expect(Filter::count())->toBe(1);
+});
+
 it('deletes a filter', function () {
     $filter = Filter::factory()->create();
 
@@ -140,6 +204,20 @@ it('toggles a filter active and inactive', function () {
 
     $this->get(route('filters.toggleActive', $filter));
     expect($filter->refresh()->is_active)->toBeTrue();
+});
+
+it('queues a filter run', function () {
+    Bus::fake();
+
+    $filter = Filter::factory()->inactive()->create(['name' => 'Rača only']);
+
+    $this->actingAs(User::factory()->create())
+        ->from(route('filters.index'))
+        ->post(route('filters.run', $filter))
+        ->assertRedirect(route('filters.index'))
+        ->assertSessionHas('status', 'Sniffing "Rača only" started, new entries will show up shortly.');
+
+    Bus::assertDispatched(SniffFilterJob::class, fn (SniffFilterJob $job): bool => $job->filter->is($filter));
 });
 
 it('builds the search url', function () {

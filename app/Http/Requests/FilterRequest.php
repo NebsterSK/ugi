@@ -16,6 +16,7 @@ class FilterRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
+                Rule::unique('filters', 'name')->ignore($this->route('filter')),
             ],
             'property_type' => [
                 'required',
@@ -55,6 +56,7 @@ class FilterRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'name.unique' => 'A filter with this name already exists.',
             'locations.required' => 'Select at least one location.',
             'price_to.gte' => 'Price to must be greater than or equal to price from.',
         ];

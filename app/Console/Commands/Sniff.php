@@ -2,15 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Entry;
+use App\Actions\SniffFilter;
 use App\Models\Filter;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Sleep;
-use Illuminate\Support\Str;
-use Symfony\Component\DomCrawler\Crawler;
-use Throwable;
 
 class Sniff extends Command
 {
@@ -18,23 +12,7 @@ class Sniff extends Command
 
     protected $description = 'Sniff us a new home.';
 
-    protected const string SELECTOR_ENTRY = 'div.MuiGrid-root.MuiGrid-direction-xs-row.MuiGrid-grid-xs-12.MuiGrid-grid-md-8';
-
-    protected const string SELECTOR_ENTRY_URL = 'a.MuiBox-root';
-
-    protected const string SELECTOR_TITLE = 'h2.MuiTypography-root.MuiTypography-h4';
-
-    protected const string SELECTOR_ADDRESS = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2.MuiTypography-noWrap';
-
-    protected const string SELECTOR_ROOMS = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2.MuiTypography-noWrap';
-
-    protected const string SELECTOR_AREA = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2';
-
-    protected const string SELECTOR_PRICE = 'a.MuiStack-root > p.MuiTypography-root.MuiTypography-h5';
-
-    protected const string SELECTOR_PRICE_PER_SQM = 'a.MuiStack-root > p.MuiTypography-root.MuiTypography-label1';
-
-    public function handle(): int
+    public function handle(SniffFilter $sniffFilter): int
     {
         $filters = Filter::active()->get();
 
@@ -44,96 +22,8 @@ class Sniff extends Command
             return self::SUCCESS;
         }
 
-        $filters->each(fn (Filter $filter) => $this->sniff($filter));
+        $filters->each(fn (Filter $filter) => $sniffFilter->handle($filter, $this->output));
 
         return self::SUCCESS;
-    }
-
-    protected function sniff(Filter $filter): void
-    {
-        $this->info('Sniffing filter: '.$filter->name);
-
-        $page = 1;
-
-        do {
-            $url = $filter->url($page);
-
-            $this->info('Requesting: '.$url);
-
-            $response = Http::get($url);
-            $crawler = new Crawler($response->body());
-
-            $entries = $crawler->filter(self::SELECTOR_ENTRY);
-
-            if ($entries->count() === 0) {
-                $this->info('No entries found on page '.$page.', stopping.');
-                break;
-            }
-
-            $entries->each(function (Crawler $node) {
-                $this->line('Processing entry...');
-
-                $entryUrl = $node->filter(self::SELECTOR_ENTRY_URL)->first()->attr('href');
-                $internalId = Str::of($entryUrl)->after('https://www.nehnutelnosti.sk/detail/')->before('/')->toString();
-
-                $title = $node->filter(self::SELECTOR_TITLE)->first()->text();
-
-                $wholeAddress = $node->filter(self::SELECTOR_ADDRESS)->first()->text();
-                $street = Str::of($wholeAddress)->before(',');
-                $district = Str::of($wholeAddress)->after(', Bratislava-')->before(',')->replace('Bratislava-', '');
-
-                $roomsText = $node->filter(self::SELECTOR_ROOMS)->slice(1)->text();
-                $rooms = Str::of($roomsText)->before(' ')->toInteger();
-
-                $areaText = $node->filter(self::SELECTOR_AREA)->slice(2)->text();
-                $area = Str::of($areaText)->before(' m')->toInteger();
-
-                $priceText = $node->filter(self::SELECTOR_PRICE)->first()->text();
-                $price = Str::of($priceText)->before(' €')->replace("\u{A0}", '')->toInteger();
-
-                $pricePerSqmText = $node->filter(self::SELECTOR_PRICE_PER_SQM)->first()->text();
-                $pricePerSqm = Str::of($pricePerSqmText)->before(' €')->replace("\u{A0}", '')->toInteger();
-
-                try {
-                    Entry::upsert([
-                        'internal_id' => $internalId,
-                        'url' => $entryUrl,
-                        'title' => $title,
-                        'rooms' => $rooms,
-                        'street' => $street,
-                        'district' => $district,
-                        'area' => $area,
-                        'price' => $price,
-                        'price_per_sqm' => $pricePerSqm,
-                    ], [
-                        'internal_id',
-                    ], [
-                        'title',
-                        'rooms',
-                        'street',
-                        'district',
-                        'area',
-                        'price',
-                        'price_per_sqm',
-                    ]);
-                } catch (Throwable $e) {
-                    Log::error('Entry was not created or updated', [
-                        'exception_message' => $e->getMessage(),
-                        'exception_file' => $e->getFile(),
-                        'exception_line' => $e->getLine(),
-                        'internal_id' => $internalId,
-                        'title' => $title,
-                    ]);
-
-                    $this->error('Entry was not created or updated: '.$title);
-                }
-
-                $this->line('Entry created or updated: '.$title);
-            });
-
-            $page++;
-
-            Sleep::for(rand(3, 6))->seconds();
-        } while ($response->ok());
     }
 }

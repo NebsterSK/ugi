@@ -12,6 +12,10 @@
             <a href="{{ route('filters.create') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New filter</a>
         </div>
 
+        @session('status')
+            <div class="alert alert-success">{{ $value }}</div>
+        @endsession
+
         @if($filters->isEmpty())
             <p class="text-muted">No filters yet. Sniff has nothing to search for.</p>
         @else
@@ -48,7 +52,15 @@
                                 @endif
                             </td>
                             <td class="text-nowrap text-end">
+                                <form action="{{ route('filters.run', $filter) }}" method="POST" class="d-inline">
+                                    @csrf
+
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Run now"><i class="fa-solid fa-play"></i></button>
+                                </form>
+
                                 <a href="{{ $filter->url() }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Open on nehnutelnosti.sk"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+
+                                <a href="{{ route('filters.duplicate', $filter) }}" class="btn btn-sm btn-outline-secondary" title="Duplicate"><i class="fa-regular fa-copy"></i></a>
 
                                 <a href="{{ route('filters.edit', $filter) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fa-regular fa-pen-to-square"></i></a>
 

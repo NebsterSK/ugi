@@ -1,0 +1,135 @@
+<?php
+
+namespace App\Actions;
+
+use App\Models\Entry;
+use App\Models\Filter;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Sleep;
+use Illuminate\Support\Str;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DomCrawler\Crawler;
+use Throwable;
+
+class SniffFilter
+{
+    protected const string SELECTOR_ENTRY = 'div.MuiGrid-root.MuiGrid-direction-xs-row.MuiGrid-grid-xs-12.MuiGrid-grid-md-8';
+
+    protected const string SELECTOR_ENTRY_URL = 'a.MuiBox-root';
+
+    protected const string SELECTOR_TITLE = 'h2.MuiTypography-root.MuiTypography-h4';
+
+    protected const string SELECTOR_ADDRESS = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2.MuiTypography-noWrap';
+
+    protected const string SELECTOR_ROOMS = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2.MuiTypography-noWrap';
+
+    protected const string SELECTOR_AREA = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2';
+
+    protected const string SELECTOR_PRICE = 'a.MuiStack-root > p.MuiTypography-root.MuiTypography-h5';
+
+    protected const string SELECTOR_PRICE_PER_SQM = 'a.MuiStack-root > p.MuiTypography-root.MuiTypography-label1';
+
+    protected ?OutputInterface $output = null;
+
+    /**
+     * Create or update entries from every results page of the given filter, reporting progress to the given console output.
+     */
+    public function handle(Filter $filter, ?OutputInterface $output = null): void
+    {
+        $this->output = $output;
+
+        $this->write('<info>Sniffing filter: '.$filter->name.'</info>');
+
+        $page = 1;
+
+        do {
+            $url = $filter->url($page);
+
+            $this->write('<info>Requesting: '.$url.'</info>');
+
+            $response = Http::get($url);
+            $crawler = new Crawler($response->body());
+
+            $entries = $crawler->filter(self::SELECTOR_ENTRY);
+
+            if ($entries->count() === 0) {
+                $this->write('<info>No entries found on page '.$page.', stopping.</info>');
+                break;
+            }
+
+            $entries->each(fn (Crawler $node) => $this->saveEntry($node));
+
+            $page++;
+
+            Sleep::for(rand(1, 3))->seconds();
+        } while ($response->ok());
+    }
+
+    protected function saveEntry(Crawler $node): void
+    {
+        $this->write('Processing entry...');
+
+        $entryUrl = $node->filter(self::SELECTOR_ENTRY_URL)->first()->attr('href');
+        $internalId = Str::of($entryUrl)->after('https://www.nehnutelnosti.sk/detail/')->before('/')->toString();
+
+        $title = $node->filter(self::SELECTOR_TITLE)->first()->text();
+
+        $wholeAddress = $node->filter(self::SELECTOR_ADDRESS)->first()->text();
+        $street = Str::of($wholeAddress)->before(',');
+        $district = Str::of($wholeAddress)->after(', Bratislava-')->before(',')->replace('Bratislava-', '');
+
+        $roomsText = $node->filter(self::SELECTOR_ROOMS)->slice(1)->text();
+        $rooms = Str::of($roomsText)->before(' ')->toInteger();
+
+        $areaText = $node->filter(self::SELECTOR_AREA)->slice(2)->text();
+        $area = Str::of($areaText)->before(' m')->toInteger();
+
+        $priceText = $node->filter(self::SELECTOR_PRICE)->first()->text();
+        $price = Str::of($priceText)->before(' €')->replace("\u{A0}", '')->toInteger();
+
+        $pricePerSqmText = $node->filter(self::SELECTOR_PRICE_PER_SQM)->first()->text();
+        $pricePerSqm = Str::of($pricePerSqmText)->before(' €')->replace("\u{A0}", '')->toInteger();
+
+        try {
+            Entry::upsert([
+                'internal_id' => $internalId,
+                'url' => $entryUrl,
+                'title' => $title,
+                'rooms' => $rooms,
+                'street' => $street,
+                'district' => $district,
+                'area' => $area,
+                'price' => $price,
+                'price_per_sqm' => $pricePerSqm,
+            ], [
+                'internal_id',
+            ], [
+                'title',
+                'rooms',
+                'street',
+                'district',
+                'area',
+                'price',
+                'price_per_sqm',
+            ]);
+        } catch (Throwable $e) {
+            Log::error('Entry was not created or updated', [
+                'exception_message' => $e->getMessage(),
+                'exception_file' => $e->getFile(),
+                'exception_line' => $e->getLine(),
+                'internal_id' => $internalId,
+                'title' => $title,
+            ]);
+
+            $this->write('<error>Entry was not created or updated: '.$title.'</error>');
+        }
+
+        $this->write('Entry created or updated: '.$title);
+    }
+
+    protected function write(string $message): void
+    {
+        $this->output?->writeln($message);
+    }
+}
