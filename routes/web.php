@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\EntriesController;
-use App\Http\Controllers\StatisticsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -18,8 +17,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/{entry}/toggleFavorite', [EntriesController::class, 'toggleFavorite'])->name('toggleFavorite');
         Route::get('/{entry}/toggleIgnore', [EntriesController::class, 'toggleIgnore'])->name('toggleIgnore');
     });
-
-    Route::get('/statistics', [StatisticsController::class, 'index'])->name('statistics.index');
 });
 
 Auth::routes();

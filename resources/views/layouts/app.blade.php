@@ -35,10 +35,6 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('entries.seen') }}">Seen</a>
                         </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('statistics.index') }}">Statistics</a>
-                        </li>
                     </ul>
 
                     <!-- Right Side Of Navbar -->
