@@ -3,9 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Models\Entry;
+use App\Models\Filter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 use Symfony\Component\DomCrawler\Crawler;
 use Throwable;
@@ -15,8 +17,6 @@ class Sniff extends Command
     protected $signature = 'sniff';
 
     protected $description = 'Sniff us a new home.';
-
-    protected const string BASE_URL = 'https://www.nehnutelnosti.sk/vysledky/4-izbove-byty/predaj?locations=100012514&locations=100012524&locations=100012513&locations=100012511&priceTo=280000&areaFrom=75&priceFrom=240000';
 
     protected const string SELECTOR_ENTRY = 'div.MuiGrid-root.MuiGrid-direction-xs-row.MuiGrid-grid-xs-12.MuiGrid-grid-md-8';
 
@@ -36,14 +36,27 @@ class Sniff extends Command
 
     public function handle(): int
     {
+        $filters = Filter::active()->get();
+
+        if ($filters->isEmpty()) {
+            $this->warn('No active filters, nothing to sniff.');
+
+            return self::SUCCESS;
+        }
+
+        $filters->each(fn (Filter $filter) => $this->sniff($filter));
+
+        return self::SUCCESS;
+    }
+
+    protected function sniff(Filter $filter): void
+    {
+        $this->info('Sniffing filter: '.$filter->name);
+
         $page = 1;
 
         do {
-            if ($page === 1) {
-                $url = self::BASE_URL;
-            } else {
-                $url = self::BASE_URL.'&page='.$page;
-            }
+            $url = $filter->url($page);
 
             $this->info('Requesting: '.$url);
 
@@ -120,9 +133,7 @@ class Sniff extends Command
 
             $page++;
 
-            sleep(rand(3, 6));
+            Sleep::for(rand(3, 6))->seconds();
         } while ($response->ok());
-
-        return self::SUCCESS;
     }
 }

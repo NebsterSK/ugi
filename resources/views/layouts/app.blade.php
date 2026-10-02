@@ -35,6 +35,10 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('entries.seen') }}">Seen</a>
                         </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('filters.index') }}">Filters</a>
+                        </li>
                     </ul>
 
                     <!-- Right Side Of Navbar -->
