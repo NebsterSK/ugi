@@ -2,11 +2,13 @@
 
 use App\Console\Commands\Sniff;
 use App\Jobs\SniffFilterJob;
+use App\Mail\NewEntriesFound;
 use App\Models\Entry;
 use App\Models\Filter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Sleep;
 
 uses(RefreshDatabase::class);
@@ -86,6 +88,61 @@ it('saves entries from every results page until an empty one', function () {
 
     Sleep::assertSleptTimes(1);
     Sleep::assertSlept(fn ($duration): bool => $duration->totalSeconds >= 1 && $duration->totalSeconds <= 3);
+});
+
+it('emails the entries created during the run', function () {
+    Mail::fake();
+    config(['mail.notification_recipient' => 'me@example.com']);
+    Http::fake(['*' => Http::sequence()->push(resultsPage())->push('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+    $this->travel(-1)->days();
+    $oldEntry = Entry::factory()->create();
+    $this->travelBack();
+
+    $this->artisan(Sniff::class)->assertSuccessful();
+
+    Mail::assertSent(NewEntriesFound::class, fn (NewEntriesFound $mail): bool => $mail->hasTo('me@example.com')
+        && $mail->entries->pluck('internal_id')->all() === ['JuAbc123']
+        && ! $mail->entries->contains($oldEntry));
+});
+
+it('does not email when nothing new was found', function () {
+    Mail::fake();
+    config(['mail.notification_recipient' => 'me@example.com']);
+    Http::fake(['*' => Http::response('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+
+    $this->artisan(Sniff::class)->assertSuccessful();
+
+    Mail::assertNothingSent();
+});
+
+it('does not email without a notification address', function () {
+    Mail::fake();
+    config(['mail.notification_recipient' => null]);
+    Http::fake(['*' => Http::sequence()->push(resultsPage())->push('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+
+    $this->artisan(Sniff::class)
+        ->expectsOutput('Found 1 new entries, but MAIL_NOTIFICATION_RECIPIENT is not set.')
+        ->assertSuccessful();
+
+    Mail::assertNothingSent();
+});
+
+it('lists the new entries in the notification email', function () {
+    $entry = Entry::factory()->create(['title' => 'Pekný byt', 'district' => 'Rača', 'price' => 265000]);
+
+    $mail = new NewEntriesFound(Entry::all());
+
+    $mail->assertHasSubject('1 new apartment found');
+    $mail->assertSeeInHtml('Pekný byt');
+    $mail->assertSeeInHtml('Rača');
+    $mail->assertSeeInHtml('€ 265 000');
+    $mail->assertSeeInHtml(route('entries.show', $entry));
 });
 
 it('sniffs a single filter from the job, even an inactive one', function () {

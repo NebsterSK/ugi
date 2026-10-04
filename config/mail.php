@@ -115,4 +115,16 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Notification Recipient
+    |--------------------------------------------------------------------------
+    |
+    | Address that receives the "new apartments found" e-mail sent at the end
+    | of the sniff command. Leave empty to disable the notification.
+    |
+    */
+
+    'notification_recipient' => env('MAIL_NOTIFICATION_RECIPIENT'),
+
 ];
