@@ -6,6 +6,8 @@
 
 @section('content')
     <div class="container">
+        <a href="{{ route('entries.index') }}" class="btn btn-sm btn-outline-secondary mb-3"><i class="fa-solid fa-arrow-left"></i> Back</a>
+
         <h1>{{ $entry->title }}</h1>
 
         <a href="{{ $entry->url }}" target="_blank">{{ $entry->url }}</a>
