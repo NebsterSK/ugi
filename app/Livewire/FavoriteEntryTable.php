@@ -20,6 +20,9 @@ class FavoriteEntryTable extends DataTableComponent
             'class' => 'table-bordered table-striped table-hover text-nowrap',
         ]);
         $this->setDefaultSort('favorited_at', 'desc');
+        $this->setTdAttributes(fn (Column $column, Entry $row): array => $column->isField('price_per_sqm')
+            ? ['style' => '--bs-table-bg: '.$row->price_per_sqm_background]
+            : []);
     }
 
     public function columns(): array
@@ -49,7 +52,8 @@ class FavoriteEntryTable extends DataTableComponent
             Column::make('Price per m2', 'price_per_sqm')
                 ->searchable()
                 ->sortable()
-                ->format(fn ($value, Entry $row, Column $column) => number_format($value, 0, ',', ' ')),
+                ->format(fn ($value, Entry $row, Column $column) => '<span'.($row->is_price_per_sqm_extreme ? ' class="fw-bold"' : '').'>'.number_format($value, 0, ',', ' ').'</span>')
+                ->html(),
             Column::make('Favorited at', 'favorited_at')
                 ->searchable()
                 ->sortable()

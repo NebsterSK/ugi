@@ -28,6 +28,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read bool $is_favorite
+ * @property-read string $price_per_sqm_background
+ * @property-read bool $is_price_per_sqm_extreme
  * @method static \Database\Factories\EntryFactory factory($count = null, $state = [])
  * @method static Builder<static>|Entry favorite()
  * @method static Builder<static>|Entry ignored()
@@ -105,5 +107,43 @@ class Entry extends Model
         return Attribute::make(get: function (): bool {
             return (bool) $this->favorited_at;
         });
+    }
+
+    /**
+     * Background colour of the price per m2, from green for the cheapest to red for the most expensive of all not ignored entries.
+     */
+    public function pricePerSqmBackground(): Attribute
+    {
+        return Attribute::make(get: function (): string {
+            ['min' => $min, 'max' => $max] = self::pricePerSqmRange();
+
+            $position = $max > $min ? ($this->price_per_sqm - $min) / ($max - $min) : 0;
+            $hue = (int) round(120 * (1 - min(max($position, 0), 1)));
+
+            return 'hsl('.$hue.', 70%, 82%)';
+        });
+    }
+
+    /**
+     * Whether the price per m2 is the lowest or the highest of all not ignored entries.
+     */
+    public function isPricePerSqmExtreme(): Attribute
+    {
+        return Attribute::make(get: function (): bool {
+            return in_array($this->price_per_sqm, self::pricePerSqmRange(), true);
+        });
+    }
+
+    // Methods
+
+    /**
+     * @return array{min: int, max: int}
+     */
+    public static function pricePerSqmRange(): array
+    {
+        return once(fn (): array => [
+            'min' => (int) self::query()->notIgnored()->min('price_per_sqm'),
+            'max' => (int) self::query()->notIgnored()->max('price_per_sqm'),
+        ]);
     }
 }

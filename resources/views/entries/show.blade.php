@@ -35,7 +35,7 @@
 
             Price: € {{ number_format($entry->price, 0, ',', ' ') }}<br>
 
-            Price per m2: € {{ number_format($entry->price_per_sqm, 0, ',', ' ') }} / m2
+            Price per m2: <span @class(['px-1 rounded', 'fw-bold' => $entry->is_price_per_sqm_extreme]) style="background-color: {{ $entry->price_per_sqm_background }}">€ {{ number_format($entry->price_per_sqm, 0, ',', ' ') }} / m2</span>
         </p>
 
         <hr>
