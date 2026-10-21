@@ -30,6 +30,10 @@ class SniffFilter
 
     protected const string SELECTOR_PRICE_PER_SQM = 'a.MuiStack-root > p.MuiTypography-root.MuiTypography-label1';
 
+    protected const int DUPLICATE_TITLE_SIMILARITY = 90;
+
+    protected const int DUPLICATE_AREA_TOLERANCE = 2;
+
     protected ?OutputInterface $output = null;
 
     /**
@@ -91,6 +95,16 @@ class SniffFilter
         $pricePerSqmText = $node->filter(self::SELECTOR_PRICE_PER_SQM)->first()->text();
         $pricePerSqm = Str::of($pricePerSqmText)->before(' €')->replace("\u{A0}", '')->toInteger();
 
+        if (! Entry::query()->where('internal_id', $internalId)->exists()) {
+            $duplicate = $this->findDuplicate($title, $rooms, $area);
+
+            if ($duplicate) {
+                $this->write('<comment>Skipping duplicate of entry #'.$duplicate->id.': '.$title.'</comment>');
+
+                return;
+            }
+        }
+
         try {
             Entry::upsert([
                 'internal_id' => $internalId,
@@ -126,6 +140,29 @@ class SniffFilter
         }
 
         $this->write('Entry created or updated: '.$title);
+    }
+
+    /**
+     * Existing entry with the same number of rooms, almost the same area and a title at least 90 % similar to the given one.
+     */
+    protected function findDuplicate(string $title, int $rooms, int $area): ?Entry
+    {
+        $normalizedTitle = $this->normalizeTitle($title);
+
+        return Entry::query()
+            ->where('rooms', $rooms)
+            ->whereBetween('area', [$area - self::DUPLICATE_AREA_TOLERANCE, $area + self::DUPLICATE_AREA_TOLERANCE])
+            ->get(['id', 'title'])
+            ->first(function (Entry $entry) use ($normalizedTitle): bool {
+                similar_text($normalizedTitle, $this->normalizeTitle($entry->title), $similarity);
+
+                return $similarity >= self::DUPLICATE_TITLE_SIMILARITY;
+            });
+    }
+
+    protected function normalizeTitle(string $title): string
+    {
+        return Str::of($title)->ascii()->squish()->lower()->toString();
     }
 
     protected function write(string $message): void

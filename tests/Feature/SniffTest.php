@@ -19,25 +19,38 @@ beforeEach(function () {
     Sleep::fake();
 });
 
-function resultsPage(): string
+/**
+ * @param  array<int, array{internal_id?: string, title?: string, rooms?: int, area?: int}>  $listings
+ */
+function resultsPage(array $listings = [[]]): string
 {
-    return <<<'HTML'
-        <html><body>
+    $html = collect($listings)->map(function (array $listing): string {
+        $listing = [
+            'internal_id' => 'JuAbc123',
+            'title' => 'Pekný 4-izbový byt',
+            'rooms' => 4,
+            'area' => 82,
+            ...$listing,
+        ];
+
+        return <<<HTML
             <div class="MuiGrid-root MuiGrid-direction-xs-row MuiGrid-grid-xs-12 MuiGrid-grid-md-8">
-                <a class="MuiBox-root" href="https://www.nehnutelnosti.sk/detail/JuAbc123/pekny-4-izbovy-byt">Detail</a>
-                <h2 class="MuiTypography-root MuiTypography-h4">Pekný 4-izbový byt</h2>
+                <a class="MuiBox-root" href="https://www.nehnutelnosti.sk/detail/{$listing['internal_id']}/byt">Detail</a>
+                <h2 class="MuiTypography-root MuiTypography-h4">{$listing['title']}</h2>
                 <div class="MuiStack-root">
                     <p class="MuiTypography-root MuiTypography-body2 MuiTypography-noWrap">Trnavská cesta, Bratislava-Ružinov, okres Bratislava II</p>
-                    <p class="MuiTypography-root MuiTypography-body2 MuiTypography-noWrap">4 izby</p>
-                    <p class="MuiTypography-root MuiTypography-body2">82 m²</p>
+                    <p class="MuiTypography-root MuiTypography-body2 MuiTypography-noWrap">{$listing['rooms']} izby</p>
+                    <p class="MuiTypography-root MuiTypography-body2">{$listing['area']} m²</p>
                 </div>
                 <a class="MuiStack-root">
                     <p class="MuiTypography-root MuiTypography-h5">265&nbsp;000 €</p>
                     <p class="MuiTypography-root MuiTypography-label1">3&nbsp;232 € / m²</p>
                 </a>
             </div>
-        </body></html>
-        HTML;
+            HTML;
+    })->implode('');
+
+    return '<html><body>'.$html.'</body></html>';
 }
 
 it('sniffs every active filter', function () {
@@ -143,6 +156,68 @@ it('lists the new entries in the notification email', function () {
     $mail->assertSeeInHtml('Rača');
     $mail->assertSeeInHtml('€ 265 000');
     $mail->assertSeeInHtml(route('entries.show', $entry));
+});
+
+it('skips a listing similar to an existing entry', function (array $listing) {
+    Http::fake(['*' => Http::sequence()->push(resultsPage([$listing]))->push('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+    $existing = Entry::factory()->create(['title' => 'Pekný 4-izbový byt na predaj', 'rooms' => 4, 'area' => 82]);
+
+    $this->artisan(Sniff::class)
+        ->expectsOutputToContain('Skipping duplicate of entry #'.$existing->id)
+        ->assertSuccessful();
+
+    expect(Entry::count())->toBe(1);
+})->with([
+    'same title' => [['internal_id' => 'Other1', 'title' => 'Pekný 4-izbový byt na predaj']],
+    'nearly the same title' => [['internal_id' => 'Other1', 'title' => 'Pekny 4-izbovy byt  na PREDAJ']],
+    'area 2 m2 bigger' => [['internal_id' => 'Other1', 'title' => 'Pekný 4-izbový byt na predaj', 'area' => 84]],
+    'area 2 m2 smaller' => [['internal_id' => 'Other1', 'title' => 'Pekný 4-izbový byt na predaj', 'area' => 80]],
+]);
+
+it('imports a listing that is not similar enough to any existing entry', function (array $listing) {
+    Http::fake(['*' => Http::sequence()->push(resultsPage([$listing]))->push('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+    Entry::factory()->create(['title' => 'Pekný 4-izbový byt na predaj', 'rooms' => 4, 'area' => 82]);
+
+    $this->artisan(Sniff::class)->assertSuccessful();
+
+    expect(Entry::where('internal_id', 'Other1')->exists())->toBeTrue();
+})->with([
+    'different title' => [['internal_id' => 'Other1', 'title' => 'Slnečný byt s balkónom pri parku']],
+    'different rooms' => [['internal_id' => 'Other1', 'title' => 'Pekný 4-izbový byt na predaj', 'rooms' => 3]],
+    'area 3 m2 different' => [['internal_id' => 'Other1', 'title' => 'Pekný 4-izbový byt na predaj', 'area' => 85]],
+]);
+
+it('updates a listing that is already imported instead of treating it as a duplicate', function () {
+    Http::fake(['*' => Http::sequence()->push(resultsPage([['internal_id' => 'JuAbc123', 'title' => 'Pekný 4-izbový byt, nová cena']]))->push('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+    $existing = Entry::factory()->create(['internal_id' => 'JuAbc123', 'title' => 'Pekný 4-izbový byt', 'rooms' => 4, 'area' => 82]);
+
+    $this->artisan(Sniff::class)->assertSuccessful();
+
+    expect(Entry::count())->toBe(1)
+        ->and($existing->refresh()->title)->toBe('Pekný 4-izbový byt, nová cena');
+});
+
+it('skips duplicates found in the same run and leaves them out of the email', function () {
+    Mail::fake();
+    config(['mail.notification_recipient' => 'me@example.com']);
+    Http::fake(['*' => Http::sequence()->push(resultsPage([
+        ['internal_id' => 'First1', 'title' => 'Pekný 4-izbový byt v Ružinove, novostavba'],
+        ['internal_id' => 'Second2', 'title' => 'Pekný 4-izbový byt v Ružinove - novostavba'],
+    ]))->push('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+
+    $this->artisan(Sniff::class)->assertSuccessful();
+
+    expect(Entry::pluck('internal_id')->all())->toBe(['First1']);
+
+    Mail::assertSent(NewEntriesFound::class, fn (NewEntriesFound $mail): bool => $mail->entries->pluck('internal_id')->all() === ['First1']);
 });
 
 it('sniffs a single filter from the job, even an inactive one', function () {
