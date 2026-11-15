@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Throwable;
@@ -18,13 +19,13 @@ class SniffFilter
 
     protected const string SELECTOR_ENTRY_URL = 'a.MuiBox-root';
 
-    protected const string SELECTOR_TITLE = 'h2.MuiTypography-root.MuiTypography-h4';
+    protected const string SELECTOR_TITLE = 'h2.MuiTypography-root';
 
-    protected const string SELECTOR_ADDRESS = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2.MuiTypography-noWrap';
+    protected const string SELECTOR_ADDRESS = 'p.MuiTypography-root.MuiTypography-body3.MuiTypography-noWrap';
 
-    protected const string SELECTOR_ROOMS = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2.MuiTypography-noWrap';
+    protected const string SELECTOR_ROOMS = 'p.MuiTypography-root.MuiTypography-body3.MuiTypography-noWrap';
 
-    protected const string SELECTOR_AREA = 'div.MuiStack-root > p.MuiTypography-root.MuiTypography-body2';
+    protected const string SELECTOR_AREA = 'p.MuiTypography-root.MuiTypography-body3';
 
     protected const string SELECTOR_PRICE = 'a.MuiStack-root > p.MuiTypography-root.MuiTypography-h5';
 
@@ -74,26 +75,37 @@ class SniffFilter
     {
         $this->write('Processing entry...');
 
-        $entryUrl = $node->filter(self::SELECTOR_ENTRY_URL)->first()->attr('href');
-        $internalId = Str::of($entryUrl)->after('https://www.nehnutelnosti.sk/detail/')->before('/')->toString();
+        try {
+            $entryUrl = $node->filter(self::SELECTOR_ENTRY_URL)->first()->attr('href');
+            $internalId = Str::of($entryUrl)->after('https://www.nehnutelnosti.sk/detail/')->before('/')->toString();
 
-        $title = $node->filter(self::SELECTOR_TITLE)->first()->text();
+            $title = $node->filter(self::SELECTOR_TITLE)->first()->text();
 
-        $wholeAddress = $node->filter(self::SELECTOR_ADDRESS)->first()->text();
-        $street = Str::of($wholeAddress)->before(',');
-        $district = Str::of($wholeAddress)->after(', Bratislava-')->before(',')->replace('Bratislava-', '');
+            $wholeAddress = $node->filter(self::SELECTOR_ADDRESS)->first()->text();
+            $street = Str::of($wholeAddress)->before(',');
+            $district = Str::of($wholeAddress)->after(', Bratislava-')->before(',')->replace('Bratislava-', '');
 
-        $roomsText = $node->filter(self::SELECTOR_ROOMS)->slice(1)->text();
-        $rooms = Str::of($roomsText)->before(' ')->toInteger();
+            $roomsText = $node->filter(self::SELECTOR_ROOMS)->slice(1)->text();
+            $rooms = Str::of($roomsText)->before(' ')->toInteger();
 
-        $areaText = $node->filter(self::SELECTOR_AREA)->slice(2)->text();
-        $area = Str::of($areaText)->before(' m')->toInteger();
+            $areaText = $node->filter(self::SELECTOR_AREA)->slice(2)->text();
+            $area = Str::of($areaText)->before(' m')->toInteger();
 
-        $priceText = $node->filter(self::SELECTOR_PRICE)->first()->text();
-        $price = Str::of($priceText)->before(' €')->replace("\u{A0}", '')->toInteger();
+            $priceText = $node->filter(self::SELECTOR_PRICE)->first()->text();
+            $price = Str::of($priceText)->before(' €')->replace("\u{A0}", '')->toInteger();
 
-        $pricePerSqmText = $node->filter(self::SELECTOR_PRICE_PER_SQM)->first()->text();
-        $pricePerSqm = Str::of($pricePerSqmText)->before(' €')->replace("\u{A0}", '')->toInteger();
+            $pricePerSqmText = $node->filter(self::SELECTOR_PRICE_PER_SQM)->first()->text();
+            $pricePerSqm = Str::of($pricePerSqmText)->before(' €')->replace("\u{A0}", '')->toInteger();
+        } catch (InvalidArgumentException $e) {
+            Log::warning('Entry could not be parsed, the listing markup has probably changed', [
+                'exception_message' => $e->getMessage(),
+                'html' => Str::limit($node->outerHtml(), 2000),
+            ]);
+
+            $this->write('<error>Entry could not be parsed: '.$e->getMessage().'</error>');
+
+            return;
+        }
 
         if (! Entry::query()->where('internal_id', $internalId)->exists()) {
             $duplicate = $this->findDuplicate($title, $rooms, $area);

@@ -36,15 +36,15 @@ function resultsPage(array $listings = [[]]): string
         return <<<HTML
             <div class="MuiGrid-root MuiGrid-direction-xs-row MuiGrid-grid-xs-12 MuiGrid-grid-md-8">
                 <a class="MuiBox-root" href="https://www.nehnutelnosti.sk/detail/{$listing['internal_id']}/byt">Detail</a>
-                <h2 class="MuiTypography-root MuiTypography-h4">{$listing['title']}</h2>
+                <h2 class="MuiTypography-root MuiTypography-body2 MuiTypography-noWrap">{$listing['title']}</h2>
                 <div class="MuiStack-root">
-                    <p class="MuiTypography-root MuiTypography-body2 MuiTypography-noWrap">Trnavská cesta, Bratislava-Ružinov, okres Bratislava II</p>
-                    <p class="MuiTypography-root MuiTypography-body2 MuiTypography-noWrap">{$listing['rooms']} izby</p>
-                    <p class="MuiTypography-root MuiTypography-body2">{$listing['area']} m²</p>
+                    <p class="MuiTypography-root MuiTypography-body3 MuiTypography-noWrap">Trnavská cesta, Bratislava-Ružinov, okres Bratislava II</p>
+                    <p class="MuiTypography-root MuiTypography-body3 MuiTypography-noWrap">{$listing['rooms']} izbový byt</p>
+                    <p class="MuiTypography-root MuiTypography-body3">{$listing['area']}.40 m²</p>
                 </div>
                 <a class="MuiStack-root">
                     <p class="MuiTypography-root MuiTypography-h5">265&nbsp;000 €</p>
-                    <p class="MuiTypography-root MuiTypography-label1">3&nbsp;232 € / m²</p>
+                    <p class="MuiTypography-root MuiTypography-label1">3&nbsp;232,15&nbsp;€/m²</p>
                 </a>
             </div>
             HTML;
@@ -218,6 +218,25 @@ it('skips duplicates found in the same run and leaves them out of the email', fu
     expect(Entry::pluck('internal_id')->all())->toBe(['First1']);
 
     Mail::assertSent(NewEntriesFound::class, fn (NewEntriesFound $mail): bool => $mail->entries->pluck('internal_id')->all() === ['First1']);
+});
+
+it('skips a listing it cannot parse and saves the rest', function () {
+    Http::fake(['*' => Http::sequence()->push(str_replace(
+        '<h2 class="MuiTypography-root MuiTypography-body2 MuiTypography-noWrap">Broken listing</h2>',
+        '',
+        resultsPage([
+            ['internal_id' => 'Broken1', 'title' => 'Broken listing'],
+            ['internal_id' => 'Fine2', 'title' => 'Slnečný 4-izbový byt pri parku'],
+        ]),
+    ))->push('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+
+    $this->artisan(Sniff::class)
+        ->expectsOutputToContain('Entry could not be parsed')
+        ->assertSuccessful();
+
+    expect(Entry::pluck('internal_id')->all())->toBe(['Fine2']);
 });
 
 it('sniffs a single filter from the job, even an inactive one', function () {
