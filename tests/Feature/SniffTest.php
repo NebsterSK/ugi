@@ -1,14 +1,18 @@
 <?php
 
 use App\Console\Commands\Sniff;
+use App\Enums\SniffRunStatus;
 use App\Jobs\SniffFilterJob;
 use App\Mail\NewEntriesFound;
+use App\Mail\SniffFailed;
 use App\Models\Entry;
 use App\Models\Filter;
+use App\Models\SniffRun;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Sleep;
 
 uses(RefreshDatabase::class);
@@ -249,4 +253,124 @@ it('sniffs a single filter from the job, even an inactive one', function () {
 
     Http::assertSentCount(1);
     Http::assertSent(fn (Request $request): bool => $request->url() === $filter->url());
+});
+
+it('records a successful run with its listing counts', function () {
+    Mail::fake();
+    Http::fake(['*' => Http::sequence()->push(resultsPage([
+        ['internal_id' => 'First1', 'title' => 'Slnečný 4-izbový byt pri parku'],
+        ['internal_id' => 'Second2', 'title' => 'Tehlový byt s loggiou na Kramároch', 'area' => 95],
+    ]))->push('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+
+    $this->artisan(Sniff::class)->assertSuccessful();
+
+    expect(SniffRun::sole())
+        ->status->toBe(SniffRunStatus::Succeeded)
+        ->filters_count->toBe(1)
+        ->saved_count->toBe(2)
+        ->skipped_count->toBe(0)
+        ->failed_count->toBe(0)
+        ->new_entries_count->toBe(2)
+        ->error->toBeNull()
+        ->finished_at->not->toBeNull();
+
+    Mail::assertNotSent(SniffFailed::class);
+});
+
+it('records a warning when some listings could not be parsed', function () {
+    Mail::fake();
+    config(['mail.notification_recipient' => 'me@example.com']);
+    Http::fake(['*' => Http::sequence()->push(str_replace(
+        '<h2 class="MuiTypography-root MuiTypography-body2 MuiTypography-noWrap">Broken listing</h2>',
+        '',
+        resultsPage([
+            ['internal_id' => 'Broken1', 'title' => 'Broken listing'],
+            ['internal_id' => 'Fine2', 'title' => 'Slnečný 4-izbový byt pri parku'],
+        ]),
+    ))->push('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+
+    $this->artisan(Sniff::class)->assertSuccessful();
+
+    expect(SniffRun::sole())
+        ->status->toBe(SniffRunStatus::Warning)
+        ->saved_count->toBe(1)
+        ->failed_count->toBe(1)
+        ->error->toBe('1 listings could not be parsed or saved.');
+
+    Mail::assertNotSent(SniffFailed::class);
+});
+
+it('records a warning when no listings were found at all', function () {
+    Http::fake(['*' => Http::response('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+
+    $this->artisan(Sniff::class)->assertSuccessful();
+
+    expect(SniffRun::sole())
+        ->status->toBe(SniffRunStatus::Warning)
+        ->error->toBe('No listings found, the listing markup may have changed.');
+});
+
+it('fails and emails when the listing markup changed for every listing', function () {
+    Mail::fake();
+    config(['mail.notification_recipient' => 'me@example.com']);
+    Http::fake(['*' => Http::sequence()->push(str_replace(
+        '<h2 class',
+        '<h3 class',
+        resultsPage([['internal_id' => 'First1'], ['internal_id' => 'Second2', 'title' => 'Iný byt', 'area' => 95]]),
+    ))->push('<html><body></body></html>')]);
+
+    Filter::factory()->create();
+
+    $this->artisan(Sniff::class)->assertFailed();
+
+    $error = 'None of the 2 listings could be parsed or saved, the listing markup has probably changed.';
+
+    expect(SniffRun::sole())
+        ->status->toBe(SniffRunStatus::Failed)
+        ->failed_count->toBe(2)
+        ->error->toBe($error);
+
+    Mail::assertSent(SniffFailed::class, fn (SniffFailed $mail): bool => $mail->hasTo('me@example.com') && $mail->error === $error);
+});
+
+it('fails and emails when a results page cannot be loaded', function () {
+    Mail::fake();
+    config(['mail.notification_recipient' => 'me@example.com']);
+    Http::fake(['*' => Http::response('Forbidden', 403)]);
+
+    Filter::factory()->create();
+
+    $this->artisan(Sniff::class)->assertFailed();
+
+    expect(SniffRun::sole())
+        ->status->toBe(SniffRunStatus::Failed)
+        ->error->toContain('403')
+        ->finished_at->not->toBeNull();
+
+    Mail::assertSent(SniffFailed::class, fn (SniffFailed $mail): bool => str_contains($mail->error, '403'));
+});
+
+it('emails the failure even when the run cannot be recorded', function () {
+    Mail::fake();
+    config(['mail.notification_recipient' => 'me@example.com']);
+    Http::fake();
+
+    Schema::drop('sniff_runs');
+
+    $this->artisan(Sniff::class)->assertFailed();
+
+    Mail::assertSent(SniffFailed::class, fn (SniffFailed $mail): bool => str_contains($mail->error, 'sniff_runs'));
+});
+
+it('shows the error in the failure email', function () {
+    $mail = new SniffFailed('Something broke', now());
+
+    $mail->assertHasSubject('Sniff failed');
+    $mail->assertSeeInHtml('Something broke');
 });

@@ -7,3 +7,5 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command(Sniff::class)->everySixHours()->environments(['production']);
 
 Schedule::command(Bury::class)->dailyAt('05:30')->environments(['production']);
+
+Schedule::command('model:prune')->dailyAt('05:45')->environments(['production']);

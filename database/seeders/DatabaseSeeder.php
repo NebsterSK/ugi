@@ -20,6 +20,9 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
         ]);
 
-        $this->call(EntrySeeder::class);
+        $this->call([
+            EntrySeeder::class,
+            SniffRunSeeder::class,
+        ]);
     }
 }

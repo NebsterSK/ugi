@@ -2,11 +2,10 @@
 
 use App\Http\Controllers\EntriesController;
 use App\Http\Controllers\FiltersController;
+use App\Http\Controllers\IndexController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('index');
-});
+Route::get('/', IndexController::class)->name('index');
 
 Route::middleware('auth')->group(function () {
     Route::prefix('entries')->name('entries.')->group(function () {

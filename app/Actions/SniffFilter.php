@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\Entry;
 use App\Models\Filter;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Sleep;
@@ -38,11 +39,21 @@ class SniffFilter
     protected ?OutputInterface $output = null;
 
     /**
-     * Create or update entries from every results page of the given filter, reporting progress to the given console output.
+     * @var array{saved: int, skipped: int, failed: int}
      */
-    public function handle(Filter $filter, ?OutputInterface $output = null): void
+    protected array $counts = ['saved' => 0, 'skipped' => 0, 'failed' => 0];
+
+    /**
+     * Create or update entries from every results page of the given filter, reporting progress to the given console output.
+     *
+     * @return array{saved: int, skipped: int, failed: int} Listings saved, skipped as duplicates and failed to parse or save.
+     *
+     * @throws RequestException When the first results page cannot be loaded.
+     */
+    public function handle(Filter $filter, ?OutputInterface $output = null): array
     {
         $this->output = $output;
+        $this->counts = ['saved' => 0, 'skipped' => 0, 'failed' => 0];
 
         $this->write('<info>Sniffing filter: '.$filter->name.'</info>');
 
@@ -54,6 +65,11 @@ class SniffFilter
             $this->write('<info>Requesting: '.$url.'</info>');
 
             $response = Http::get($url);
+
+            if ($page === 1) {
+                $response->throw();
+            }
+
             $crawler = new Crawler($response->body());
 
             $entries = $crawler->filter(self::SELECTOR_ENTRY);
@@ -69,6 +85,8 @@ class SniffFilter
 
             Sleep::for(rand(1, 3))->seconds();
         } while ($response->ok());
+
+        return $this->counts;
     }
 
     protected function saveEntry(Crawler $node): void
@@ -104,6 +122,8 @@ class SniffFilter
 
             $this->write('<error>Entry could not be parsed: '.$e->getMessage().'</error>');
 
+            $this->counts['failed']++;
+
             return;
         }
 
@@ -112,6 +132,8 @@ class SniffFilter
 
             if ($duplicate) {
                 $this->write('<comment>Skipping duplicate of entry #'.$duplicate->id.': '.$title.'</comment>');
+
+                $this->counts['skipped']++;
 
                 return;
             }
@@ -149,7 +171,13 @@ class SniffFilter
             ]);
 
             $this->write('<error>Entry was not created or updated: '.$title.'</error>');
+
+            $this->counts['failed']++;
+
+            return;
         }
+
+        $this->counts['saved']++;
 
         $this->write('Entry created or updated: '.$title);
     }
