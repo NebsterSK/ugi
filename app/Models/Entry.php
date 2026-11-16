@@ -28,8 +28,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read bool $is_favorite
- * @property-read string $price_per_sqm_background
  * @property-read bool $is_price_per_sqm_extreme
+ * @property-read string $price_per_sqm_background
  * @method static \Database\Factories\EntryFactory factory($count = null, $state = [])
  * @method static Builder<static>|Entry favorite()
  * @method static Builder<static>|Entry ignored()

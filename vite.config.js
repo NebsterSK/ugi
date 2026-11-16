@@ -16,9 +16,15 @@ export default defineConfig({
             targets: [
                 {
                     src: 'node_modules/@fortawesome/fontawesome-free/webfonts',
-                    dest: ''
+                    dest: '',
+                    rename: { stripBase: 3 },
                 }
             ]
         })
     ],
+    server: {
+        watch: {
+            ignored: ['**/storage/framework/views/**'],
+        },
+    },
 });
